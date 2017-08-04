@@ -9,7 +9,10 @@
   "author": "Samuel Yang",
   "license": "MIT",
   "babel": {
-    "presets": ["env", "react"]
+    "presets": [
+      "env",
+      "react"
+    ]
   },
   "devDependencies": {
     "babel-core": "^6.24.0",
@@ -23,6 +26,7 @@
     "webpack-dev-server": "^2.4.2"
   },
   "dependencies": {
+    "axios": "^0.16.2",
     "react": "^16.0.0-alpha.5",
     "react-dom": "^16.0.0-alpha.5"
   }
