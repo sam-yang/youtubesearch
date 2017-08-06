@@ -2,14 +2,78 @@ var React = require('react');
 var PropTypes = require('prop-types');
 var api = require('../utils/api');
 
-function SelectLanguage(props) {
+class VideoInput extends React.Component {
+  constructor(props) {
+    super(props);
 
+    this.state = {
+      id: ''
+    }
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  handleChange(event) {
+    var value = event.target.value;
+
+    this.setState(function() {
+      return {
+        id: value
+      }
+    })
+  }
+
+  handleSubmit(event) {
+    event.preventDefault();
+    this.props.onSubmit(this.state.id);
+  }
+  render () {
+    return (
+      <form onSubmit={this.handleSubmit}>
+        <label htmlFor='id'>
+          Youtube ID
+        </label>
+        <input
+          id='video id'
+          placeholder='Video ID'
+          type="text"
+          autoComplete='off'
+          value={this.state.id}
+          onChange={this.handleChange}
+        />
+        <button
+          className='button'
+          type='submit'
+          disabled={!this.state.id}>
+            Submit
+        </button>
+      </form>
+    )
+  }
+}
+
+function CommentList (props) {
   return (
-    <form onSubmit="return {props.onSubmit}">
-      Youtube ID:<br/>
-      <input type="text"/><br/>
-      <input type="submit" value="Submit"/>
-    </form>
+    <ul>
+      {props.comments.map(function (comment, index) {
+        return (
+          <li key={comment.id}>
+            <div>#{index + 1}</div>
+            <ul>
+              <li>
+                <img
+                  className='avatar'
+                  src={comment.snippet.topLevelComment.snippet.authorProfileImageUrl}
+                  alt={'Avatar for ' + comment.snippet.topLevelComment.snippet.authorDisplayName}
+                />
+              </li>
+              <li><a href={comment.snippet.topLevelComment.snippet.authorChannelUrl}>{comment.snippet.topLevelComment.snippet.authorDisplayName}</a></li>
+              <li>{comment.snippet.topLevelComment.snippet.textOriginal}</li>
+            </ul>
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 
@@ -18,35 +82,33 @@ class Popular extends React.Component {
     super(props);
     this.state = {
       videoID: null,
-      commenets: null
+      comments: null
     };
 
-    this.updateVideoID = this.updateVideoID.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
   }
-  componentDidMount() {
+
+  handleSubmit(id) {
+    api.fetchYoutubeComments(id)
+      .then(function(comments, id) {
+        this.setState(function() {
+          return {
+            videoID: id,
+            comments: comments
+          }
+        });
+    }.bind(this));
   }
-  updateVideoID(id) {
-    this.setState(function () {
-      return {
-        videoID: id
-      }
-    });
-    api.fetchYoutubeComments(this.state.videoID)
-      .then(function(comments) {
-        console.log(comments)
-      })
-  }
-  test() {
-    console.log("test");
-    return false;
-  }
+
   render() {
     return (
       <div>
-        <SelectLanguage
-          selectedLanguage={this.state.selectedLanguage}
-          onSubmit={this.test}
+        <VideoInput
+          onSubmit={this.handleSubmit}
         />
+        {!this.state.comments
+          ? <p>LOADING</p>
+          : <CommentList comments={this.state.comments}/>}
       </div>
     )
   }
