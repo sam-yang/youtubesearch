@@ -106,9 +106,7 @@ class Popular extends React.Component {
         <VideoInput
           onSubmit={this.handleSubmit}
         />
-        {!this.state.comments
-          ? <p>LOADING</p>
-          : <CommentList comments={this.state.comments}/>}
+        {this.state.comments && <CommentList comments={this.state.comments}/>}
       </div>
     )
   }
