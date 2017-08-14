@@ -1,6 +1,7 @@
 var React = require('react');
 var PropTypes = require('prop-types');
 var api = require('../utils/api');
+import '../static/css/search.css';
 
 class VideoInput extends React.Component {
   constructor(props) {
@@ -30,12 +31,10 @@ class VideoInput extends React.Component {
   render () {
     return (
       <form onSubmit={this.handleSubmit}>
-        <label htmlFor='id'>
-          Youtube ID
-        </label>
         <input
+          className='searchbar'
           id='video id'
-          placeholder='Video ID'
+          placeholder='Youtube ID'
           type="text"
           autoComplete='off'
           value={this.state.id}
@@ -57,47 +56,59 @@ function CommentList (props) {
     <ul>
       {props.comments.map(function (comment, index) {
         return (
-          <li key={comment.id}>
-            <div>#{index + 1}</div>
-            <ul>
-              <li>
-                <img
-                  className='avatar'
-                  src={comment.snippet.topLevelComment.snippet.authorProfileImageUrl}
-                  alt={'Avatar for ' + comment.snippet.topLevelComment.snippet.authorDisplayName}
-                />
-              </li>
-              <li><a href={comment.snippet.topLevelComment.snippet.authorChannelUrl}>{comment.snippet.topLevelComment.snippet.authorDisplayName}</a></li>
-              <li>{comment.snippet.topLevelComment.snippet.textOriginal}</li>
-            </ul>
-          </li>
+          <Comment key={index} comment={comment} index={index}/>
         )
       })}
     </ul>
   )
 }
 
-class Popular extends React.Component {
+function Comment (props) {
+  return (
+    //<a href={'https://www.youtube.com/watch?v=' + props.comment.snippet.videoId + '&lc=' + props.comment.snippet.topLevelComment.id}>
+      <div className="comment" key={props.comment.id}>
+        <img
+          className='avatar'
+          src={props.comment.snippet.topLevelComment.snippet.authorProfileImageUrl}
+          alt={'Avatar for ' + props.comment.snippet.topLevelComment.snippet.authorDisplayName}
+        />
+        <a className='displayname' href={props.comment.snippet.topLevelComment.snippet.authorChannelUrl}>{props.comment.snippet.topLevelComment.snippet.authorDisplayName}</a>
+        <p>{props.comment.snippet.topLevelComment.snippet.textOriginal}</p>
+      </div>
+    //</a>
+  )
+}
+
+class Search extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       videoID: null,
-      comments: null
+      comments: null,
+      nextPageToken: null
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   handleSubmit(id) {
-    api.fetchYoutubeComments(id)
-      .then(function(comments, id) {
+    api.fetchComments(id, this.state.nextPageToken)
+      .then(function(comments) {
         this.setState(function() {
           return {
             videoID: id,
-            comments: comments
+            comments: comments.items,
+            nextPageToken: comments.nextPageToken
           }
-        });
-    }.bind(this));
+        })
+        console.log('one iteration');
+        if (this.state.nextPageToken) {
+        this.handleSubmit(id);
+        }
+        else {
+          console.log('done');
+        }
+      }.bind(this));
   }
 
   render() {
@@ -112,4 +123,4 @@ class Popular extends React.Component {
   }
 }
 
-module.exports = Popular;
+module.exports = Search;

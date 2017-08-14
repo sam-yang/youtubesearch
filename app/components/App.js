@@ -1,11 +1,12 @@
 var React = require('react');
-var Popular = require('./Popular')
+var Search = require('./Search')
+import '../static/css/main.css';
 
 class App extends React.Component {
   render() {
     return (
       <div className="container">
-        <Popular />
+        <Search />
       </div>
     )
   }
