@@ -107,29 +107,42 @@ class Search extends React.Component {
     super(props);
     this.state = {
       videoID: null,
-      commentstemp: [],
+      searchTerm: null,
       comments: [],
       nextPageToken: null,
-      videoThumbnail: null,
-      searchTerm: null
+      videoThumbnail: null
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.initializeInfo = this.initializeInfo.bind(this);
+    this.getAllComments = this.getAllComments.bind(this);
   }
 
   handleSubmit(id, term) {
+    this.initializeInfo (id, term);
+
+    this.getAllComments (id, term);
+
+  }
+
+  initializeInfo(id, term) {
     api.fetchVideoDetails(id)
       .then(function(details) {
-        console.log(details);
+        // console.log(details);
         this.setState(function() {
           return {
+            searchTerm: term,
+            videoID: id,
             videoThumbnail: details.items[0].snippet.thumbnails.standard.url
           }
         }.bind(this));
       }.bind(this));
+  }
+
+  getAllComments (id, term) {
     api.fetchComments(id, this.state.nextPageToken)
       .then(function(comments) {
-        console.log('main ' + this.state.comments);
+        // console.log('main ' + this.state.comments);
         this.setState(function() {
           return {
             videoID: id,
@@ -137,21 +150,27 @@ class Search extends React.Component {
             nextPageToken: comments.nextPageToken
           }
         }.bind(this));
-        console.log('one iteration');
+        // console.log('one iteration');
         if (this.state.nextPageToken) {
-          this.handleSubmit(id);
+          this.getAllComments(id, term);
         }
         else {
-          console.log('else ' + this.state.comments);
+          // console.log('else ' + this.state.comments);
+          var search = new jssearch.Search('etag');
+          search.addIndex(['snippet','topLevelComment','snippet','authorDisplayName']);
+          search.addIndex(['snippet','topLevelComment','snippet','textOriginal']);
+
+          search.addDocuments(this.state.comments);
           this.setState(function() {
             return {
               videoID: id,
-              // comments: this.state.comments.concat(comments.items),
-              nextPageToken: null
+              searchTerm: term,
+              nextPageToken: null,
+              searchResults: search.search(this.state.searchTerm)
             }
           }.bind(this));
-          console.log('final ' + this.state.comments);
-          console.log('done');
+          // console.log('final ' + this.state.comments);
+          // console.log('done');
         }
       }.bind(this));
   }
@@ -159,11 +178,11 @@ class Search extends React.Component {
   render() {
     return (
       <div>
-        {this.state.videoThumbnail == null &&
-          <VideoInput
-            onSubmit={this.handleSubmit}
-          />}
-        {this.state.comments && <CommentList comments={this.state.comments}/>}
+
+        <VideoInput
+          onSubmit={this.handleSubmit}
+        />
+        {this.state.searchResults && <CommentList comments={this.state.searchResults}/>}
       </div>
     )
   }
