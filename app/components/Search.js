@@ -1,6 +1,7 @@
 var React = require('react');
 var PropTypes = require('prop-types');
 var api = require('../utils/api');
+var jssearch = require('js-search');
 import '../static/css/search.css';
 
 class VideoInput extends React.Component {
@@ -8,13 +9,15 @@ class VideoInput extends React.Component {
     super(props);
 
     this.state = {
-      id: ''
+      id: '',
+      searchTerm: ''
     }
-    this.handleChange = this.handleChange.bind(this);
+    this.handleChangeId = this.handleChangeId.bind(this);
+    this.handleChangeSearchTerm = this.handleChangeSearchTerm.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
-  handleChange(event) {
+  handleChangeId(event) {
     var value = event.target.value;
 
     this.setState(function() {
@@ -24,10 +27,21 @@ class VideoInput extends React.Component {
     })
   }
 
+  handleChangeSearchTerm(event) {
+    var value = event.target.value;
+
+    this.setState(function() {
+      return {
+        searchTerm: value
+      }
+    })
+  }
+
   handleSubmit(event) {
     event.preventDefault();
-    this.props.onSubmit(this.state.id);
+    this.props.onSubmit(this.state.id, this.state.searchTerm);
   }
+
   render () {
     return (
       <form onSubmit={this.handleSubmit}>
@@ -38,7 +52,16 @@ class VideoInput extends React.Component {
           type="text"
           autoComplete='off'
           value={this.state.id}
-          onChange={this.handleChange}
+          onChange={this.handleChangeId}
+        />
+        <input
+          className='searchbar'
+          id='video id'
+          placeholder='Search term'
+          type="text"
+          autoComplete='off'
+          value={this.state.searchTerm}
+          onChange={this.handleChangeSearchTerm}
         />
         <button
           className='button'
@@ -84,28 +107,50 @@ class Search extends React.Component {
     super(props);
     this.state = {
       videoID: null,
-      comments: null,
-      nextPageToken: null
+      commentstemp: [],
+      comments: [],
+      nextPageToken: null,
+      videoThumbnail: null,
+      searchTerm: null
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
-  handleSubmit(id) {
+  handleSubmit(id, term) {
+    api.fetchVideoDetails(id)
+      .then(function(details) {
+        console.log(details);
+        this.setState(function() {
+          return {
+            videoThumbnail: details.items[0].snippet.thumbnails.standard.url
+          }
+        }.bind(this));
+      }.bind(this));
     api.fetchComments(id, this.state.nextPageToken)
       .then(function(comments) {
+        console.log('main ' + this.state.comments);
         this.setState(function() {
           return {
             videoID: id,
-            comments: comments.items,
+            comments: this.state.comments.concat(comments.items),
             nextPageToken: comments.nextPageToken
           }
-        })
+        }.bind(this));
         console.log('one iteration');
         if (this.state.nextPageToken) {
-        this.handleSubmit(id);
+          this.handleSubmit(id);
         }
         else {
+          console.log('else ' + this.state.comments);
+          this.setState(function() {
+            return {
+              videoID: id,
+              // comments: this.state.comments.concat(comments.items),
+              nextPageToken: null
+            }
+          }.bind(this));
+          console.log('final ' + this.state.comments);
           console.log('done');
         }
       }.bind(this));
@@ -114,9 +159,10 @@ class Search extends React.Component {
   render() {
     return (
       <div>
-        <VideoInput
-          onSubmit={this.handleSubmit}
-        />
+        {this.state.videoThumbnail == null &&
+          <VideoInput
+            onSubmit={this.handleSubmit}
+          />}
         {this.state.comments && <CommentList comments={this.state.comments}/>}
       </div>
     )

@@ -52,5 +52,6 @@ p {
   display: block;
   font-size: 16px;
   margin: 0 auto;
+  margin-top: 10px;
   padding: 5px;
 }
