@@ -14,10 +14,10 @@ module.exports = {
   fetchComments: function(id, token) {
     var apikey = 'AIzaSyArWKHJFGMM_zH-wpW8Obrwppc8mVPeIEM';
     if (token) {
-      var URL = window.encodeURI('https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&maxResults=100&pageToken=' + token + '&videoId='+ id + '&key=' + apikey);
+      var URL = window.encodeURI('https://www.googleapis.com/youtube/v3/commentThreads?part=snippet,replies&maxResults=100&pageToken=' + token + '&videoId='+ id + '&key=' + apikey);
     }
     else {
-      var URL = window.encodeURI('https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&maxResults=100&videoId='+ id + '&key=' + apikey);
+      var URL = window.encodeURI('https://www.googleapis.com/youtube/v3/commentThreads?part=snippet,replies&maxResults=100&videoId='+ id + '&key=' + apikey);
     }
     return axios.get(URL)
       .then(function(response) {
@@ -27,11 +27,31 @@ module.exports = {
 
   fetchVideoDetails: function(id) {
     var apikey = 'AIzaSyArWKHJFGMM_zH-wpW8Obrwppc8mVPeIEM';
-    var URL = 'https://www.googleapis.com/youtube/v3/videos?part=snippet&id=' + id + '&key=' + apikey;
+    var URL = window.encodeURI('https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=' + id + '&key=' + apikey);
 
     return axios.get(URL)
       .then(function(response) {
         return response.data;
+      });
+  },
+
+  fetchTotalComments: function(id) {
+    var apikey = 'AIzaSyArWKHJFGMM_zH-wpW8Obrwppc8mVPeIEM';
+    var URL = 'https://www.googleapis.com/youtube/v3/videos?part=statistics&id=' + id + '&key=' + apikey;
+
+    return axios.get(URL)
+      .then(function(response) {
+        return response.data.items.statistics.commentCount;
+      });
+  },
+
+  fetchAllReplies: function(parentId) {
+    var apikey = 'AIzaSyArWKHJFGMM_zH-wpW8Obrwppc8mVPeIEM';
+    var URL = 'https://www.googleapis.com/youtube/v3/comments?part=snippet&maxResults=100&parentId=' + parentId + '&key=' + apikey;
+
+    return axios.get(URL)
+      .then(function(response) {
+        return response.data.items;
       });
   }
 }
