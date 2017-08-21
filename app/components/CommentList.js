@@ -7,143 +7,10 @@ var ReactRouter = require('react-router-dom');
 var Router = ReactRouter.BrowserRouter;
 var Route = ReactRouter.Route;
 var Link = ReactRouter.Link;
+var queryString = require('query-string');
 import '../static/css/search.css';
 
-class VideoInput extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      id: '',
-      searchTerm: ''
-    }
-    this.handleChangeId = this.handleChangeId.bind(this);
-    this.handleChangeSearchTerm = this.handleChangeSearchTerm.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
-  }
-
-  handleChangeId(event) {
-    var value = event.target.value;
-
-    this.setState(function() {
-      return {
-        id: value
-      }
-    })
-  }
-
-  handleChangeSearchTerm(event) {
-    var value = event.target.value;
-
-    this.setState(function() {
-      return {
-        searchTerm: value
-      }
-    })
-  }
-
-  handleSubmit(event) {
-    event.preventDefault();
-    this.props.onSubmit(this.state.id, this.state.searchTerm);
-  }
-
-  render () {
-    var match = this.props.match
-    return (
-      <form onSubmit={this.handleSubmit}>
-        <input
-          className='searchbar'
-          id='video id'
-          placeholder='Youtube ID'
-          type="text"
-          autoComplete='off'
-          value={this.state.id}
-          onChange={this.handleChangeId}
-        />
-        <input
-          className='searchbar'
-          id='video id'
-          placeholder='Search term'
-          type="text"
-          autoComplete='off'
-          value={this.state.searchTerm}
-          onChange={this.handleChangeSearchTerm}
-        />
-        <button
-          className='button'
-          type='submit'
-          disabled={!this.state.id || !this.state.searchTerm}>
-            Search
-        </button>
-      </form>
-    )
-  }
-}
-
-function CommentList (props) {
-  return (
-    <ul>
-      {props.comments.map(function (comment, index) {
-        if (comment.snippet.hasOwnProperty('totalReplyCount')) {
-          return (
-            <Comment key={index} comment={comment} index={index}/>
-          )
-        }
-        else {
-          return (
-            <Reply key={index} comment={comment} index={index}/>
-          )
-        }
-      })}
-    </ul>
-  )
-}
-
-function Comment (props) {
-  return (
-    // <a href={'https://www.youtube.com/watch?v=' + props.comment.snippet.videoId + '&lc=' + props.comment.snippet.topLevelComment.id}>
-    <div className="comment" key={props.comment.id}>
-      <img
-        className='avatar'
-        src={props.comment.snippet.topLevelComment.snippet.authorProfileImageUrl}
-        alt={'Avatar for ' + props.comment.snippet.topLevelComment.snippet.authorDisplayName}
-      />
-      <a className='displayname' href={props.comment.snippet.topLevelComment.snippet.authorChannelUrl}>{props.comment.snippet.topLevelComment.snippet.authorDisplayName}</a>
-      <p>{props.comment.snippet.topLevelComment.snippet.textOriginal}</p>
-    </div>
-    // </a>
-  )
-}
-
-function Reply (props) {
-  return (
-    <div className="comment" key={props.comment.id}>
-      <img
-        className='avatar'
-        src={props.comment.snippet.authorProfileImageUrl}
-        alt={'Avatar for ' + props.comment.snippet.authorDisplayName}
-      />
-      <a className='displayname' href={props.comment.snippet.authorChannelUrl}>{props.comment.snippet.authorDisplayName}</a>
-      <p>{props.comment.snippet.textOriginal}</p>
-    </div>
-  )
-}
-
-function LoadingBar (props) {
-  const divStyle = {
-    backgroundColor: '#8BC34A',
-    width: props.percentage * 100 + '%',
-    height: '5px',
-    transition: '1s cubic-bezier(.37,.2,.47,.95)'
-  }
-  return (
-    <div className="loadingbarwrapper">
-      <div className="loadingbar" style={divStyle}></div>
-    </div>
-  )
-}
-
-class Search extends React.Component {
+class CommentList extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -159,6 +26,20 @@ class Search extends React.Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.initializeInfo = this.initializeInfo.bind(this);
     this.getAllComments = this.getAllComments.bind(this);
+  }
+
+  componentWillMount() {
+    var info = queryString.parse(this.props.location.search);
+    var id = info.videoID;
+    var term = info.searchTerm;
+    this.handleSubmit(id, term);
+  }
+
+  componentWillReceiveProps(nextprops) {
+    var info = queryString.parse(nextprops.location.search);
+    var id = info.videoID;
+    var term = info.searchTerm;
+    this.handleSubmit(id, term);
   }
 
   handleSubmit(id, term) {
@@ -252,16 +133,63 @@ class Search extends React.Component {
         }.bind(this));
       }.bind(this));
   }
-
   render() {
+    console.log(this.state);
+    // return (
+    //   <div>
+    //     {this.state.searchResults && <p>xd</p>}
+    //   </div>
+    // )
     return (
       <div>
-        <VideoInput onSubmit={this.handleSubmit}/>
-        {this.state.percentage && <LoadingBar percentage={this.state.percentage}/>}
-          {this.state.searchResults && <CommentList comments={this.state.searchResults}/>}
+        {this.state.searchResults &&
+        <ul>
+          {this.state.searchResults.map(function (comment, index) {
+            if (comment.snippet.hasOwnProperty('totalReplyCount')) {
+              return (
+                <Comment key={index} comment={comment} index={index}/>
+              )
+            }
+            else {
+              return (
+                <Reply key={index} comment={comment} index={index}/>
+              )
+            }
+          })}
+        </ul>}
       </div>
     )
   }
 }
 
-module.exports = Search;
+function Comment (props) {
+  return (
+    // <a href={'https://www.youtube.com/watch?v=' + props.comment.snippet.videoId + '&lc=' + props.comment.snippet.topLevelComment.id}>
+    <div className="comment" key={props.comment.id}>
+      <img
+        className='avatar'
+        src={props.comment.snippet.topLevelComment.snippet.authorProfileImageUrl}
+        alt={'Avatar for ' + props.comment.snippet.topLevelComment.snippet.authorDisplayName}
+      />
+      <a className='displayname' href={props.comment.snippet.topLevelComment.snippet.authorChannelUrl}>{props.comment.snippet.topLevelComment.snippet.authorDisplayName}</a>
+      <p>{props.comment.snippet.topLevelComment.snippet.textOriginal}</p>
+    </div>
+    // </a>
+  )
+}
+
+function Reply (props) {
+  return (
+    <div className="comment" key={props.comment.id}>
+      <img
+        className='avatar'
+        src={props.comment.snippet.authorProfileImageUrl}
+        alt={'Avatar for ' + props.comment.snippet.authorDisplayName}
+      />
+      <a className='displayname' href={props.comment.snippet.authorChannelUrl}>{props.comment.snippet.authorDisplayName}</a>
+      <p>{props.comment.snippet.textOriginal}</p>
+    </div>
+  )
+}
+
+module.exports = CommentList;
