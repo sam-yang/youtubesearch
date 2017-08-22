@@ -143,20 +143,24 @@ class CommentList extends React.Component {
     return (
       <div>
         {this.state.searchResults &&
-        <ul>
-          {this.state.searchResults.map(function (comment, index) {
-            if (comment.snippet.hasOwnProperty('totalReplyCount')) {
-              return (
-                <Comment key={index} comment={comment} index={index}/>
-              )
-            }
-            else {
-              return (
-                <Reply key={index} comment={comment} index={index}/>
-              )
-            }
-          })}
-        </ul>}
+        <div>
+          <LoadingBar percentage={this.state.percentage}/>
+          <ul>
+            {this.state.searchResults.map(function (comment, index) {
+              if (comment.snippet.hasOwnProperty('totalReplyCount')) {
+                return (
+                  <Comment key={index} comment={comment} index={index}/>
+                )
+              }
+              else {
+                return (
+                  <Reply key={index} comment={comment} index={index}/>
+                )
+              }
+            })}
+          </ul>
+        </div>
+      }
       </div>
     )
   }
@@ -192,4 +196,17 @@ function Reply (props) {
   )
 }
 
+function LoadingBar (props) {
+  const divStyle = {
+    backgroundColor: '#8BC34A',
+    width: props.percentage * 100 + '%',
+    height: '5px',
+    transition: '1s cubic-bezier(.37,.2,.47,.95)'
+  }
+  return (
+    <div className="loadingbarwrapper">
+      <div className="loadingbar" style={divStyle}></div>
+    </div>
+  )
+}
 module.exports = CommentList;

@@ -3,6 +3,7 @@ var ReactRouter = require('react-router-dom');
 var Router = ReactRouter.BrowserRouter;
 var Route = ReactRouter.Route;
 var Link = ReactRouter.Link;
+var queryString = require('query-string');
 
 class VideoInput extends React.Component {
   constructor(props) {
@@ -15,6 +16,20 @@ class VideoInput extends React.Component {
     this.handleChangeId = this.handleChangeId.bind(this);
     this.handleChangeSearchTerm = this.handleChangeSearchTerm.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  componentWillMount () {
+    if (!this.props.match.isExact) {
+      var info = queryString.parse(this.props.location.search);
+      var id = info.videoID;
+      var term = info.searchTerm;
+      this.setState(function() {
+        return {
+          id: id,
+          searchTerm: term
+        }
+      });
+    }
   }
 
   handleChangeId(event) {
@@ -43,7 +58,7 @@ class VideoInput extends React.Component {
   }
 
   render () {
-    var match = this.props.match
+    var match = this.props.match;
     return (
       <form onSubmit={this.handleSubmit}>
         <input

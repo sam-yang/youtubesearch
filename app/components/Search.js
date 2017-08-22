@@ -129,19 +129,7 @@ function Reply (props) {
   )
 }
 
-function LoadingBar (props) {
-  const divStyle = {
-    backgroundColor: '#8BC34A',
-    width: props.percentage * 100 + '%',
-    height: '5px',
-    transition: '1s cubic-bezier(.37,.2,.47,.95)'
-  }
-  return (
-    <div className="loadingbarwrapper">
-      <div className="loadingbar" style={divStyle}></div>
-    </div>
-  )
-}
+
 
 class Search extends React.Component {
   constructor(props) {
