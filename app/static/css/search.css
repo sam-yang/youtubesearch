@@ -67,3 +67,23 @@ p {
   margin-top: 10px;
   padding: 5px;
 }
+
+.comment-enter {
+  opacity: 0.01;
+  transform: translate3d(0, -20%, 0);
+}
+
+.comment-enter.comment-enter-active {
+  opacity: 1;
+  transition: opacity 300 ease-in, transform 300 ease-in;
+  transform: translate3d(0, 0, 0);
+}
+
+.comment-leave {
+  opacity: 1;
+}
+
+.comment-leave.comment-leave-active {
+  opacity: 0.01;
+  transition: opacity 300ms ease-in;
+}

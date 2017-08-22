@@ -8,6 +8,7 @@ var Router = ReactRouter.BrowserRouter;
 var Route = ReactRouter.Route;
 var Link = ReactRouter.Link;
 var queryString = require('query-string');
+var CSSTransitionGroup = require('react-transition-group/CSSTransitionGroup')
 import '../static/css/search.css';
 
 class CommentList extends React.Component {
@@ -26,6 +27,8 @@ class CommentList extends React.Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.initializeInfo = this.initializeInfo.bind(this);
     this.getAllComments = this.getAllComments.bind(this);
+    this.CancelToken = axios.CancelToken;
+    this.source = this.CancelToken.source();
   }
 
   componentWillMount() {
@@ -36,6 +39,8 @@ class CommentList extends React.Component {
   }
 
   componentWillReceiveProps(nextprops) {
+    this.source.cancel("New Search");
+    this.source = this.CancelToken.source();
     var info = queryString.parse(nextprops.location.search);
     var id = info.videoID;
     var term = info.searchTerm;
@@ -44,14 +49,15 @@ class CommentList extends React.Component {
 
   handleSubmit(id, term) {
     this.initializeInfo (id, term);
-
   }
 
+
   initializeInfo(id, term) {
-    api.fetchVideoDetails(id)
+    api.fetchVideoDetails(id, this.source)
       .then(function(details) {
         // console.log(details);
         this.setState(function() {
+          console.log("resetting info!");
           return {
             searchTerm: term,
             videoID: id,
@@ -63,25 +69,21 @@ class CommentList extends React.Component {
             percentage: .001
           }
         }.bind(this));
+        console.log(this.state);
         this.getAllComments(id, term);
       }.bind(this));
   }
 
   getAllComments (id, term) {
     var promises = [];
-    api.fetchComments(id, this.state.nextPageToken)
+    api.fetchComments(id, this.state.nextPageToken, this.source)
       .then(function(comments) {
         // console.log('main ' + this.state.comments);
         for (var i = 0, len = comments.items.length; i < len; i++) {
           var current = comments.items[i];
           if (current.snippet.totalReplyCount > 0) {
             if (current.replies.comments.length < current.snippet.totalReplyCount) {
-              promises.push(api.fetchAllReplies(current.id));
-              // api.fetchAllReplies(current.id)
-              //   .then(function(replies) {
-              //     console.log(replies);
-              //     comments.items = comments.items.concat(replies);
-              //   })
+              promises.push(api.fetchAllReplies(current.id, this.source));
             }
             else {
               comments.items = comments.items.concat(comments.items[i].replies.comments);
@@ -92,7 +94,7 @@ class CommentList extends React.Component {
           results.forEach(function(replies) {
             comments.items = comments.items.concat(replies);
           })
-          console.log(comments.items);
+          // console.log(comments.items);
           var search = new jssearch.Search('etag');
           search.addIndex(['snippet','topLevelComment','snippet','authorDisplayName']);
           search.addIndex(['snippet','topLevelComment','snippet','textOriginal']);
@@ -112,7 +114,7 @@ class CommentList extends React.Component {
               percentage: newpercentage
             }
           }.bind(this));
-          console.log(this.state.percentage);
+          // console.log(this.state.percentage);
           // console.log('one iteration');
           if (this.state.nextPageToken) {
             this.getAllComments(id, term);
@@ -127,14 +129,15 @@ class CommentList extends React.Component {
                 percentage: 1
               }
             }.bind(this));
-            console.log(this.state.comments);
+             console.log(this.state.comments);
+             console.log(this.state.searchResults);
             // console.log('done');
           }
         }.bind(this));
       }.bind(this));
   }
   render() {
-    console.log(this.state);
+    // console.log(this.state);
     // return (
     //   <div>
     //     {this.state.searchResults && <p>xd</p>}
@@ -145,7 +148,10 @@ class CommentList extends React.Component {
         {this.state.searchResults &&
         <div>
           <LoadingBar percentage={this.state.percentage}/>
-          <ul>
+          <CSSTransitionGroup
+            transitionName="comment"
+            transitionEnterTimeout={500}
+            transitionLeaveTimeout={300}>
             {this.state.searchResults.map(function (comment, index) {
               if (comment.snippet.hasOwnProperty('totalReplyCount')) {
                 return (
@@ -158,7 +164,7 @@ class CommentList extends React.Component {
                 )
               }
             })}
-          </ul>
+          </CSSTransitionGroup>
         </div>
       }
       </div>
