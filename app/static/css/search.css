@@ -6,24 +6,25 @@
 
 body {
   font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif;
+  overflow-y: scroll;
 }
+
 
 .button {
   color: #e6e6e6;
   background: #0a0a0a;
   border: none;
   font-size: 16px;
-  border-radius: 3px;
   width: 200px;
   text-align: center;
   display: block;
   padding: 7px 0;
   margin: 10px auto;
+  text-decoration: none;
 }
 
-.comment {
+/*.comment {
   background-color: white;
-  border-radius: 5px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.22);
   margin: 15px 0px;
   padding: 10px;
@@ -34,7 +35,7 @@ body {
 .comment:hover {
   box-shadow: 0 2px 3px rgba(0,0,0,0.14), 0 2px 2px rgba(0,0,0,0.22);
 }
-
+*/
 .displayname {
   color: #d0021b;
   display: inline-block;
@@ -60,7 +61,6 @@ p {
 
 .searchbar {
   border: 1px solid rgba(0, 0, 0, 0.43);
-  border-radius: 3px;
   display: block;
   font-size: 16px;
   margin: 0 auto;
@@ -68,22 +68,35 @@ p {
   padding: 5px;
 }
 
+.comment-appear {
+  opacity: 0;
+  transform: translate3d(0, -20%, 0);
+}
+
+.comment-appear.comment-appear-active {
+  opacity: 1;
+  transition: opacity 400ms ease-in, transform 400ms ease-in;
+  transform: translate3d(0, 0, 0);
+}
+
 .comment-enter {
-  opacity: 0.01;
+  opacity: 0;
   transform: translate3d(0, -20%, 0);
 }
 
 .comment-enter.comment-enter-active {
   opacity: 1;
-  transition: opacity 300 ease-in, transform 300 ease-in;
+  transition: opacity 400ms ease-in, transform 400ms ease-in;
   transform: translate3d(0, 0, 0);
 }
 
 .comment-leave {
   opacity: 1;
+  transform: translate3d(0, 0, 0);
 }
 
 .comment-leave.comment-leave-active {
-  opacity: 0.01;
-  transition: opacity 300ms ease-in;
+  opacity: 0.00;
+  transition: opacity 200ms ease-in, transform 200ms ease-in;
+  transform: translate3d(0, 20%, 0);
 }

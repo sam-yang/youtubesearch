@@ -9,6 +9,7 @@ var Route = ReactRouter.Route;
 var Link = ReactRouter.Link;
 var queryString = require('query-string');
 var CSSTransitionGroup = require('react-transition-group/CSSTransitionGroup')
+import {Comment} from 'semantic-ui-react'
 import '../static/css/search.css';
 
 class CommentList extends React.Component {
@@ -41,6 +42,8 @@ class CommentList extends React.Component {
   componentWillReceiveProps(nextprops) {
     this.source.cancel("New Search");
     this.source = this.CancelToken.source();
+    this.forceUpdate();
+    this.setState({searchResults: []});
     var info = queryString.parse(nextprops.location.search);
     var id = info.videoID;
     var term = info.searchTerm;
@@ -55,13 +58,12 @@ class CommentList extends React.Component {
   initializeInfo(id, term) {
     api.fetchVideoDetails(id, this.source)
       .then(function(details) {
-        // console.log(details);
         this.setState(function() {
           console.log("resetting info!");
           return {
             searchTerm: term,
             videoID: id,
-            //videoThumbnail: details.items[0].snippet.thumbnails.standard.url,
+            videoDetails: details,
             comments: [],
             nextPageToken: null,
             searchResults: [],
@@ -69,7 +71,6 @@ class CommentList extends React.Component {
             percentage: .001
           }
         }.bind(this));
-        console.log(this.state);
         this.getAllComments(id, term);
       }.bind(this));
   }
@@ -129,8 +130,8 @@ class CommentList extends React.Component {
                 percentage: 1
               }
             }.bind(this));
-             console.log(this.state.comments);
-             console.log(this.state.searchResults);
+             // console.log(this.state.comments);
+             // console.log(this.state.searchResults);
             // console.log('done');
           }
         }.bind(this));
@@ -143,28 +144,34 @@ class CommentList extends React.Component {
     //     {this.state.searchResults && <p>xd</p>}
     //   </div>
     // )
+
     return (
       <div>
+        {this.state.videoDetails && <Thumbnail details={this.state.videoDetails}/>}
         {this.state.searchResults &&
         <div>
           <LoadingBar percentage={this.state.percentage}/>
+          <Comment.Group>
           <CSSTransitionGroup
             transitionName="comment"
-            transitionEnterTimeout={500}
-            transitionLeaveTimeout={300}>
+            transitionEnterTimeout={400}
+            transitionLeaveTimeout={200}>
+
             {this.state.searchResults.map(function (comment, index) {
               if (comment.snippet.hasOwnProperty('totalReplyCount')) {
                 return (
-                  <Comment key={index} comment={comment} index={index}/>
+                  <Commentx key={index} comment={comment} index={index}/>
                 )
               }
               else {
                 return (
-                  <Reply key={index} comment={comment} index={index}/>
+                  <Replyx key={index} comment={comment} index={index}/>
                 )
               }
             })}
-          </CSSTransitionGroup>
+            </CSSTransitionGroup>
+            </Comment.Group>
+
         </div>
       }
       </div>
@@ -172,19 +179,55 @@ class CommentList extends React.Component {
   }
 }
 
-function Comment (props) {
+// function Comment (props) {
+//   return (
+//     // <a href={'https://www.youtube.com/watch?v=' + props.comment.snippet.videoId + '&lc=' + props.comment.snippet.topLevelComment.id}>
+//     <div className="comment" key={props.comment.id}>
+//       <img
+//         className='avatar'
+//         src={props.comment.snippet.topLevelComment.snippet.authorProfileImageUrl}
+//         alt={'Avatar for ' + props.comment.snippet.topLevelComment.snippet.authorDisplayName}
+//       />
+//       <a className='displayname' href={props.comment.snippet.topLevelComment.snippet.authorChannelUrl}>{props.comment.snippet.topLevelComment.snippet.authorDisplayName}</a>
+//       <p>{props.comment.snippet.topLevelComment.snippet.textOriginal}</p>
+//     </div>
+//     // </a>
+//   )
+// }
+
+function Commentx (props) {
   return (
-    // <a href={'https://www.youtube.com/watch?v=' + props.comment.snippet.videoId + '&lc=' + props.comment.snippet.topLevelComment.id}>
-    <div className="comment" key={props.comment.id}>
-      <img
-        className='avatar'
-        src={props.comment.snippet.topLevelComment.snippet.authorProfileImageUrl}
-        alt={'Avatar for ' + props.comment.snippet.topLevelComment.snippet.authorDisplayName}
-      />
-      <a className='displayname' href={props.comment.snippet.topLevelComment.snippet.authorChannelUrl}>{props.comment.snippet.topLevelComment.snippet.authorDisplayName}</a>
-      <p>{props.comment.snippet.topLevelComment.snippet.textOriginal}</p>
-    </div>
-    // </a>
+    <Comment>
+      <Comment.Avatar src={props.comment.snippet.topLevelComment.snippet.authorProfileImageUrl} />
+      <Comment.Content>
+        <Comment.Author as='a'>{props.comment.snippet.topLevelComment.snippet.authorDisplayName}</Comment.Author>
+        <Comment.Metadata>
+          <div>Today at 5:42PM</div>
+        </Comment.Metadata>
+        <Comment.Text>{props.comment.snippet.topLevelComment.snippet.textOriginal}</Comment.Text>
+        <Comment.Actions>
+          <Comment.Action>Show Context</Comment.Action>
+        </Comment.Actions>
+      </Comment.Content>
+    </Comment>
+  )
+}
+
+function Replyx (props) {
+  return (
+    <Comment>
+      <Comment.Avatar src={props.comment.snippet.authorProfileImageUrl} />
+      <Comment.Content>
+        <Comment.Author as='a'>{props.comment.snippet.authorDisplayName}</Comment.Author>
+        <Comment.Metadata>
+          <div>Today at 5:42PM</div>
+        </Comment.Metadata>
+        <Comment.Text>{props.comment.snippet.textOriginal}</Comment.Text>
+        <Comment.Actions>
+          <Comment.Action>Show Context</Comment.Action>
+        </Comment.Actions>
+      </Comment.Content>
+    </Comment>
   )
 }
 
@@ -213,6 +256,15 @@ function LoadingBar (props) {
     <div className="loadingbarwrapper">
       <div className="loadingbar" style={divStyle}></div>
     </div>
+  )
+}
+
+function Thumbnail (props) {
+  var x = props.details;
+  console.log(Object.keys(x));
+
+  return (
+    <img src=''/>
   )
 }
 module.exports = CommentList;

@@ -3,7 +3,9 @@ var ReactRouter = require('react-router-dom');
 var Router = ReactRouter.BrowserRouter;
 var Route = ReactRouter.Route;
 var Link = ReactRouter.Link;
+var Redirect = ReactRouter.Redirect;
 var queryString = require('query-string');
+import { Button, Form } from 'semantic-ui-react'
 
 class VideoInput extends React.Component {
   constructor(props) {
@@ -11,7 +13,8 @@ class VideoInput extends React.Component {
 
     this.state = {
       id: '',
-      searchTerm: ''
+      searchTerm: '',
+      redirect: false
     }
     this.handleChangeId = this.handleChangeId.bind(this);
     this.handleChangeSearchTerm = this.handleChangeSearchTerm.bind(this);
@@ -30,6 +33,10 @@ class VideoInput extends React.Component {
         }
       });
     }
+  }
+
+  componentWillReceiveProps (nextprops) {
+    this.setState({redirect: false});
   }
 
   handleChangeId(event) {
@@ -54,46 +61,83 @@ class VideoInput extends React.Component {
 
   handleSubmit(event) {
     event.preventDefault();
-    this.props.onSubmit(this.state.id, this.state.searchTerm);
+    this.setState({redirect: true});
   }
 
+  // <button
+  //         className='button'
+  //         type='submit'
+  //         disabled={!this.state.id || !this.state.searchTerm}>
+  //           Search
+  //       </button>
+  // <form onSubmit={this.handleSubmit}>
+  //       <input
+  //         className='searchbar'
+  //         id='video id'
+  //         placeholder='Youtube ID'
+  //         type="text"
+  //         autoComplete='off'
+  //         value={this.state.id}
+  //         onChange={this.handleChangeId}
+  //       />
+  //       <input
+  //         className='searchbar'
+  //         id='video id'
+  //         placeholder='Search term'
+  //         type="text"
+  //         autoComplete='off'
+  //         value={this.state.searchTerm}
+  //         onChange={this.handleChangeSearchTerm}
+  //       />
+  //       <Link
+  //         className='button'
+  //         to={{
+  //           pathname: match.url + 'results',
+  //           search: '?videoID=' + this.state.id + '&searchTerm=' + this.state.searchTerm
+  //         }}>
+  //         Search
+  //       </Link>
+  //     </form>
   render () {
     var match = this.props.match;
-    return (
-      <form onSubmit={this.handleSubmit}>
-        <input
-          className='searchbar'
-          id='video id'
-          placeholder='Youtube ID'
-          type="text"
-          autoComplete='off'
-          value={this.state.id}
-          onChange={this.handleChangeId}
-        />
-        <input
-          className='searchbar'
-          id='video id'
-          placeholder='Search term'
-          type="text"
-          autoComplete='off'
-          value={this.state.searchTerm}
-          onChange={this.handleChangeSearchTerm}
-        />
-        <button
-          className='button'
-          type='submit'
-          disabled={!this.state.id || !this.state.searchTerm}>
-            Search
-        </button>
-        <Link
-          className='button'
+
+    if (this.state.redirect) {
+      return (
+        <Redirect
           to={{
             pathname: match.url + 'results',
-            search: '?videoID=' + this.state.id + '&searchTerm=' + this.state.searchTerm
-          }}>
-          TESTING
-        </Link>
-      </form>
+            search: '?videoID=' + this.state.id + '&searchTerm=' + this.state.searchTerm,
+          }}
+          push={true}/>
+      )
+    }
+
+    return (
+      <Form onSubmit={this.handleSubmit}>
+        <Form.Field>
+          <label>Youtube Video ID</label>
+          <input
+            id='video id'
+            placeholder='Youtube ID'
+            type="text"
+            autoComplete='off'
+            value={this.state.id}
+            onChange={this.handleChangeId}
+          />
+        </Form.Field>
+        <Form.Field>
+          <label>Search Term</label>
+          <input
+            id='video id'
+            placeholder='Search term'
+            type="text"
+            autoComplete='off'
+            value={this.state.searchTerm}
+            onChange={this.handleChangeSearchTerm}
+          />
+        </Form.Field>
+        <Button type='submit'>Submit</Button>
+      </Form>
     )
   }
 }

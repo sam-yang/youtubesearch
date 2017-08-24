@@ -14,7 +14,7 @@ class App extends React.Component {
     return (
       <Router>
         <div className="container">
-          <Route path='/' component={VideoInput}/>
+          <Route path='/' component={VideoInput} />
           <Route path='/results' component={CommentList} />
         </div>
       </Router>
