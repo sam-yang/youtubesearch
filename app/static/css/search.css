@@ -23,7 +23,7 @@ body {
   text-decoration: none;
 }
 
-/*.comment {
+.comment {
   background-color: white;
   box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.22);
   margin: 15px 0px;
@@ -35,7 +35,7 @@ body {
 .comment:hover {
   box-shadow: 0 2px 3px rgba(0,0,0,0.14), 0 2px 2px rgba(0,0,0,0.22);
 }
-*/
+
 .displayname {
   color: #d0021b;
   display: inline-block;
@@ -99,4 +99,43 @@ p {
   opacity: 0.00;
   transition: opacity 200ms ease-in, transform 200ms ease-in;
   transform: translate3d(0, 20%, 0);
+}
+
+.thumbnail {
+  width: 640px;
+  height: 360px;
+}
+
+.thumbnail-appear {
+  opacity: 0;
+  transform: translate3d(0, -20%, 0);
+}
+
+.thumbnail-appear.thumbnail-appear-active {
+  opacity: 1;
+  transition: all 200ms ease-in;
+  transform: translate3d(0, 0, 0);
+}
+
+.thumbnail-enter {
+  opacity: 0.01;
+}
+
+.thumbnail-enter.thumbnail-enter-active {
+  opacity: 1;
+  transition: all 200ms ease-in;
+}
+
+.thumbnail-leave {
+  opacity: 1;
+}
+
+.thumbnail-leave.thumbnail-leave-active {
+  opacity: 0.01;
+  transition: all 200ms ease-in;
+}
+
+.test {
+  background-color: black;
+  margin: 10px;
 }

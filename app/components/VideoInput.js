@@ -37,6 +37,17 @@ class VideoInput extends React.Component {
 
   componentWillReceiveProps (nextprops) {
     this.setState({redirect: false});
+    if (nextprops.location.pathname !== "/") {
+      var info = queryString.parse(nextprops.location.search);
+      var id = info.videoID;
+      var term = info.searchTerm;
+      this.setState(function() {
+        return {
+          id: id,
+          searchTerm: term
+        }
+      });
+    }
   }
 
   handleChangeId(event) {

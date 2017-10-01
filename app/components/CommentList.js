@@ -9,7 +9,7 @@ var Route = ReactRouter.Route;
 var Link = ReactRouter.Link;
 var queryString = require('query-string');
 var CSSTransitionGroup = require('react-transition-group/CSSTransitionGroup')
-import {Comment} from 'semantic-ui-react'
+import {TransitionMotion, spring} from 'react-motion'
 import '../static/css/search.css';
 
 class CommentList extends React.Component {
@@ -21,54 +21,59 @@ class CommentList extends React.Component {
       comments: [],
       nextPageToken: null,
       videoThumbnail: null,
-      percentage: null,
-      commentCount: null
+      percentage: .001,
+      commentCount: null,
+      searchResults: [],
+      videoDetails: null,
+      items: []
     };
 
-    this.handleSubmit = this.handleSubmit.bind(this);
     this.initializeInfo = this.initializeInfo.bind(this);
     this.getAllComments = this.getAllComments.bind(this);
     this.CancelToken = axios.CancelToken;
     this.source = this.CancelToken.source();
   }
 
-  componentWillMount() {
+  componentDidMount() {
+    console.log('componentDidMount');
     var info = queryString.parse(this.props.location.search);
     var id = info.videoID;
     var term = info.searchTerm;
-    this.handleSubmit(id, term);
+    this.setState({
+      items: [{key: 'a', size: 100}, {key: 'b', size: 200}, {key: 'c', size: 300}],
+      searchTerm: term,
+      videoID: id});
+    this.initializeInfo(id, term);
   }
 
   componentWillReceiveProps(nextprops) {
+    console.log('componentWillReceiveProps');
+    console.log(this.props);
+    console.log(nextprops);
     this.source.cancel("New Search");
     this.source = this.CancelToken.source();
-    this.forceUpdate();
-    this.setState({searchResults: []});
+    // this.forceUpdate();
     var info = queryString.parse(nextprops.location.search);
     var id = info.videoID;
     var term = info.searchTerm;
-    this.handleSubmit(id, term);
+    this.setState({
+      comments: [],
+      searchResults: [],
+      videoDetails: null,
+      searchTerm: term,
+      videoID: id});
+    console.log(this.state);
+    this.initializeInfo(id, term);
   }
-
-  handleSubmit(id, term) {
-    this.initializeInfo (id, term);
-  }
-
 
   initializeInfo(id, term) {
     api.fetchVideoDetails(id, this.source)
       .then(function(details) {
         this.setState(function() {
-          console.log("resetting info!");
+          console.log("initalizing info");
           return {
-            searchTerm: term,
-            videoID: id,
             videoDetails: details,
-            comments: [],
-            nextPageToken: null,
-            searchResults: [],
-            commentCount: parseInt(details.items[0].statistics.commentCount, 10),
-            percentage: .001
+            commentCount: parseInt(details.items[0].statistics.commentCount, 10)
           }
         }.bind(this));
         this.getAllComments(id, term);
@@ -76,10 +81,11 @@ class CommentList extends React.Component {
   }
 
   getAllComments (id, term) {
+    console.log("getting new page of comments");
     var promises = [];
     api.fetchComments(id, this.state.nextPageToken, this.source)
       .then(function(comments) {
-        // console.log('main ' + this.state.comments);
+        // console.log(this.state.comments);
         for (var i = 0, len = comments.items.length; i < len; i++) {
           var current = comments.items[i];
           if (current.snippet.totalReplyCount > 0) {
@@ -95,7 +101,6 @@ class CommentList extends React.Component {
           results.forEach(function(replies) {
             comments.items = comments.items.concat(replies);
           })
-          // console.log(comments.items);
           var search = new jssearch.Search('etag');
           search.addIndex(['snippet','topLevelComment','snippet','authorDisplayName']);
           search.addIndex(['snippet','topLevelComment','snippet','textOriginal']);
@@ -107,11 +112,12 @@ class CommentList extends React.Component {
             if (newpercentage >= 1) {
               newpercentage = 1;
             }
+            var newSearchResults = this.state.searchResults.concat(search.search(this.state.searchTerm));
             return {
               videoID: id,
               comments: this.state.comments.concat(comments.items),
               nextPageToken: comments.nextPageToken,
-              searchResults: this.state.searchResults.concat(search.search(this.state.searchTerm)),
+              searchResults: newSearchResults,
               percentage: newpercentage
             }
           }.bind(this));
@@ -121,7 +127,6 @@ class CommentList extends React.Component {
             this.getAllComments(id, term);
           }
           else {
-            // console.log('else ' + this.state.comments);
             this.setState(function() {
               return {
                 videoID: id,
@@ -131,27 +136,35 @@ class CommentList extends React.Component {
               }
             }.bind(this));
              // console.log(this.state.comments);
-             // console.log(this.state.searchResults);
+             console.log(this.state.searchResults);
             // console.log('done');
           }
         }.bind(this));
       }.bind(this));
   }
+
+  willLeave() {
+    // triggered when c's gone. Keeping c until its width/height reach 0.
+    return {width: spring(0, {stiffness: 107, damping: 18}), height: spring(0, {stiffness: 107, damping: 18})};
+  }
+
+  willEnter() {
+    // triggered when c's gone. Keeping c until its width/height reach 0.
+    return {width: 0, height: 0, opacity: 0, transform: 'translate3d(0, 0, 0)'};
+  }
+
   render() {
-    // console.log(this.state);
     // return (
     //   <div>
     //     {this.state.searchResults && <p>xd</p>}
     //   </div>
     // )
-
     return (
       <div>
-        {this.state.videoDetails && <Thumbnail details={this.state.videoDetails}/>}
+        {this.state.videoDetails && <Thumbnail key={this.state.videoDetails.items[0]} details={this.state.videoDetails}/>}
         {this.state.searchResults &&
         <div>
           <LoadingBar percentage={this.state.percentage}/>
-          <Comment.Group>
           <CSSTransitionGroup
             transitionName="comment"
             transitionEnterTimeout={400}
@@ -160,18 +173,16 @@ class CommentList extends React.Component {
             {this.state.searchResults.map(function (comment, index) {
               if (comment.snippet.hasOwnProperty('totalReplyCount')) {
                 return (
-                  <Commentx key={index} comment={comment} index={index}/>
+                  <Comment key={index} comment={comment} index={index}/>
                 )
               }
               else {
                 return (
-                  <Replyx key={index} comment={comment} index={index}/>
+                  <Reply key={index} comment={comment} index={index}/>
                 )
               }
             })}
             </CSSTransitionGroup>
-            </Comment.Group>
-
         </div>
       }
       </div>
@@ -179,55 +190,19 @@ class CommentList extends React.Component {
   }
 }
 
-// function Comment (props) {
-//   return (
-//     // <a href={'https://www.youtube.com/watch?v=' + props.comment.snippet.videoId + '&lc=' + props.comment.snippet.topLevelComment.id}>
-//     <div className="comment" key={props.comment.id}>
-//       <img
-//         className='avatar'
-//         src={props.comment.snippet.topLevelComment.snippet.authorProfileImageUrl}
-//         alt={'Avatar for ' + props.comment.snippet.topLevelComment.snippet.authorDisplayName}
-//       />
-//       <a className='displayname' href={props.comment.snippet.topLevelComment.snippet.authorChannelUrl}>{props.comment.snippet.topLevelComment.snippet.authorDisplayName}</a>
-//       <p>{props.comment.snippet.topLevelComment.snippet.textOriginal}</p>
-//     </div>
-//     // </a>
-//   )
-// }
-
-function Commentx (props) {
+function Comment (props) {
   return (
-    <Comment>
-      <Comment.Avatar src={props.comment.snippet.topLevelComment.snippet.authorProfileImageUrl} />
-      <Comment.Content>
-        <Comment.Author as='a'>{props.comment.snippet.topLevelComment.snippet.authorDisplayName}</Comment.Author>
-        <Comment.Metadata>
-          <div>Today at 5:42PM</div>
-        </Comment.Metadata>
-        <Comment.Text>{props.comment.snippet.topLevelComment.snippet.textOriginal}</Comment.Text>
-        <Comment.Actions>
-          <Comment.Action>Show Context</Comment.Action>
-        </Comment.Actions>
-      </Comment.Content>
-    </Comment>
-  )
-}
-
-function Replyx (props) {
-  return (
-    <Comment>
-      <Comment.Avatar src={props.comment.snippet.authorProfileImageUrl} />
-      <Comment.Content>
-        <Comment.Author as='a'>{props.comment.snippet.authorDisplayName}</Comment.Author>
-        <Comment.Metadata>
-          <div>Today at 5:42PM</div>
-        </Comment.Metadata>
-        <Comment.Text>{props.comment.snippet.textOriginal}</Comment.Text>
-        <Comment.Actions>
-          <Comment.Action>Show Context</Comment.Action>
-        </Comment.Actions>
-      </Comment.Content>
-    </Comment>
+    // <a href={'https://www.youtube.com/watch?v=' + props.comment.snippet.videoId + '&lc=' + props.comment.snippet.topLevelComment.id}>
+    <div className="comment" key={props.comment.id}>
+      <img
+        className='avatar'
+        src={props.comment.snippet.topLevelComment.snippet.authorProfileImageUrl}
+        alt={'Avatar for ' + props.comment.snippet.topLevelComment.snippet.authorDisplayName}
+      />
+      <a className='displayname' href={props.comment.snippet.topLevelComment.snippet.authorChannelUrl}>{props.comment.snippet.topLevelComment.snippet.authorDisplayName}</a>
+      <p>{props.comment.snippet.topLevelComment.snippet.textOriginal}</p>
+    </div>
+    // </a>
   )
 }
 
@@ -260,11 +235,11 @@ function LoadingBar (props) {
 }
 
 function Thumbnail (props) {
-  var x = props.details;
-  console.log(Object.keys(x));
-
   return (
-    <img src=''/>
+    <div>
+        <h2>{props.details.items[0].snippet.title}</h2>
+        <img className='thumbnail' src={props.details.items[0].snippet.thumbnails.maxres.url} />
+    </div>
   )
 }
 module.exports = CommentList;
